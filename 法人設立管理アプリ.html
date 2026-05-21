@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>法人設立フロー管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey:            "AIzaSyCEwf6bNv6f-pzadxwXlrwM9ahBW4yFH2Q",
+    authDomain:        "vp-seturitu-kanri.firebaseapp.com",
+    databaseURL:       "https://vp-seturitu-kanri-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:         "vp-seturitu-kanri",
+    storageBucket:     "vp-seturitu-kanri.firebasestorage.app",
+    messagingSenderId: "301105939596",
+    appId:             "1:301105939596:web:489b85f1af4b89b95b27a9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  const casesRef = ref(db, "cases");
+
+  onValue(casesRef, (snapshot) => {
+    const data = snapshot.val();
+    window._cases = data ? Object.values(data) : [];
+    if (window._renderReady) window.render();
+  });
+
+  window._saveCase = async (c) => {
+    await set(ref(db, "cases/" + c.id), c);
+  };
+
+  window._deleteCase = async (id) => {
+    await remove(ref(db, "cases/" + id));
+  };
+</script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --font: 'Noto Sans JP', sans-serif;
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,0.1);
+  --border-strong: rgba(0,0,0,0.2);
+  --text: #1a1a1a;
+  --text-muted: #888;
+  --blue: #1a56db;
+  --blue-light: #ebf0ff;
+  --red: #c0392b;
+  --red-light: #fdecea;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+body { font-family: var(--font); background: var(--bg); color: var(--text); font-size: 13px; min-height: 100vh; }
+
+#loginScreen { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.login-card { background: var(--surface); border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.10); padding: 2.5rem 2rem; width: 320px; text-align: center; }
+.login-card .logo { font-size: 36px; color: var(--blue); margin-bottom: 0.5rem; }
+.login-card h1 { font-size: 18px; font-weight: 700; margin-bottom: 0.25rem; }
+.login-card p { font-size: 12px; color: var(--text-muted); margin-bottom: 1.5rem; }
+.login-card input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-strong); border-radius: var(--radius); font-family: var(--font); font-size: 14px; background: var(--bg); color: var(--text); outline: none; margin-bottom: 12px; }
+.login-card input:focus { border-color: var(--blue); }
+.login-card button { width: 100%; padding: 11px; background: var(--blue); color: #fff; border: none; border-radius: var(--radius); font-family: var(--font); font-size: 14px; font-weight: 700; cursor: pointer; }
+.login-card button:hover { background: #1341b0; }
+.login-err { color: var(--red); font-size: 12px; margin-top: 8px; min-height: 18px; }
+
+#appScreen { display: none; min-height: 100vh; }
+
+.topbar { position: sticky; top: 0; z-index: 100; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; box-shadow: var(--shadow); }
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar-left i { font-size: 22px; color: var(--blue); }
+.topbar-left h1 { font-size: 15px; font-weight: 700; }
+.topbar-right { display: flex; gap: 8px; }
+.btn { padding: 7px 14px; border-radius: var(--radius); font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 5px; }
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: #1341b0; }
+.btn-ghost { background: transparent; border: 1.5px solid var(--border-strong); color: var(--text-muted); }
+.btn-ghost:hover { background: var(--bg); }
+
+.board-wrap { overflow-x: auto; padding: 20px; }
+.board { display: flex; gap: 12px; min-width: 1080px; }
+.column { flex: 1; min-width: 160px; }
+.col-header { padding: 8px 10px; border-radius: var(--radius); font-size: 11px; font-weight: 700; text-align: center; margin-bottom: 10px; }
+.ch0 { background: #dbeafe; color: #1e40af; }
+.ch1 { background: #d1fae5; color: #065f46; }
+.ch2 { background: #fef3c7; color: #92400e; }
+.ch3 { background: #fce7f3; color: #9d174d; }
+.ch4 { background: #ede9fe; color: #4c1d95; }
+.ch5 { background: #e5e7eb; color: #374151; }
+
+.slots { display: flex; flex-direction: column; gap: 10px; }
+.slot { min-height: 185px; border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 6px; position: relative; transition: background 0.15s, border-color 0.15s; }
+.slot.over { background: var(--blue-light); border-color: var(--blue); border-style: solid; }
+.slot-num { position: absolute; top: 4px; right: 6px; font-size: 10px; color: var(--text-muted); font-weight: 700; pointer-events: none; }
+
+.fusen { border-radius: 8px; padding: 9px 10px; border: 1.5px solid; width: 100%; box-shadow: var(--shadow); }
+.fusen.is-active { cursor: grab; }
+.fusen.is-active:active { cursor: grabbing; }
+.fusen-hdr { font-size: 10px; font-weight: 700; margin-bottom: 6px; padding-bottom: 5px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+.fusen-rows { display: flex; flex-direction: column; gap: 3px; pointer-events: none; }
+.fusen-row { display: flex; gap: 4px; font-size: 10px; line-height: 1.4; pointer-events: none; }
+.fusen-lbl { color: rgba(0,0,0,0.4); min-width: 54px; flex-shrink: 0; }
+.fusen-val { font-weight: 700; word-break: break-all; }
+.fusen-hint { font-size: 9px; color: rgba(0,0,0,0.3); margin-top: 5px; pointer-events: none; }
+.fusen-erase-btn { width: 100%; margin-top: 8px; padding: 5px; background: var(--red-light); color: var(--red); border: 1.5px solid #f1a9a0; border-radius: 6px; font-family: var(--font); font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.fusen-erase-btn:hover { background: #fad7d4; }
+.fusen-del-btn { margin-top: 6px; padding: 3px 8px; background: transparent; color: var(--red); border: 1px solid #f1a9a0; border-radius: 5px; font-family: var(--font); font-size: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; }
+.fusen-del-btn:hover { background: var(--red-light); }
+
+.f0 { background: #eff6ff; border-color: #93c5fd; color: #1e3a8a; }
+.f1 { background: #f0fdf4; border-color: #86efac; color: #14532d; }
+.f2 { background: #fffbeb; border-color: #fcd34d; color: #78350f; }
+.f3 { background: #fdf2f8; border-color: #f9a8d4; color: #831843; }
+.f4 { background: #f5f3ff; border-color: #c4b5fd; color: #3b0764; }
+.f5 { background: #f9fafb; border-color: #d1d5db; color: #1f2937; }
+
+.modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; }
+.modal-bg.open { display: flex; }
+.modal { background: var(--surface); border-radius: 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.2); padding: 1.5rem; width: 100%; max-width: 540px; }
+.modal h2 { font-size: 15px; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 6px; }
+.fsec { margin-bottom: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); }
+.fsec h3 { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+.frow.full { grid-template-columns: 1fr; }
+.fg label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 3px; font-weight: 700; }
+.fg input, .fg select { width: 100%; padding: 6px 8px; border: 1.5px solid var(--border-strong); border-radius: 7px; font-family: var(--font); font-size: 12px; background: var(--surface); color: var(--text); outline: none; }
+.fg input:focus, .fg select:focus { border-color: var(--blue); }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+.modal-footer button { padding: 8px 20px; border-radius: var(--radius); font-family: var(--font); font-size: 13px; font-weight: 700; cursor: pointer; }
+.btn-cancel { border: 1.5px solid var(--border-strong); background: transparent; color: var(--text-muted); }
+.btn-cancel:hover { background: var(--bg); }
+.btn-submit { background: var(--blue); color: #fff; border: none; }
+.btn-submit:hover { background: #1341b0; }
+.form-err { color: var(--red); font-size: 11px; margin-top: 6px; min-height: 16px; }
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="logo"><i class="ti ti-building-skyscraper"></i></div>
+    <h1>法人設立管理</h1>
+    <p>共有パスワードを入力してください</p>
+    <input type="password" id="pwInput" placeholder="パスワード" autocomplete="current-password"/>
+    <button onclick="doLogin()"><i class="ti ti-login"></i> ログイン</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<div id="appScreen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <i class="ti ti-layout-kanban"></i>
+      <h1>法人設立フロー管理ボード</h1>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-primary" onclick="openModal()"><i class="ti ti-plus"></i> 新規案件</button>
+      <button class="btn btn-ghost" onclick="doLogout()"><i class="ti ti-logout"></i> ログアウト</button>
+    </div>
+  </div>
+  <div class="board-wrap">
+    <div class="board">
+      <div class="column"><div class="col-header ch0"><i class="ti ti-file-plus"></i> ①設立受注</div><div class="slots" id="col-0"></div></div>
+      <div class="column"><div class="col-header ch1"><i class="ti ti-user-check"></i> ②鹿内・公証役場</div><div class="slots" id="col-1"></div></div>
+      <div class="column"><div class="col-header ch2"><i class="ti ti-pen"></i> ③押印日</div><div class="slots" id="col-2"></div></div>
+      <div class="column"><div class="col-header ch3"><i class="ti ti-certificate"></i> ④定款認証</div><div class="slots" id="col-3"></div></div>
+      <div class="column"><div class="col-header ch4"><i class="ti ti-transfer"></i> ⑤司法書士引渡</div><div class="slots" id="col-4"></div></div>
+      <div class="column"><div class="col-header ch5"><i class="ti ti-circle-check"></i> ⑥完了</div><div class="slots" id="col-5"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="newModal">
+  <div class="modal">
+    <h2><i class="ti ti-file-plus"></i> 新規案件登録</h2>
+    <div class="fsec">
+      <h3>① 設立受注（全工程共通）</h3>
+      <div class="frow"><div class="fg"><label>法人名 *</label><input type="text" id="f-name" placeholder="株式会社○○"/></div><div class="fg"><label>設立日 *</label><input type="date" id="f-date"/></div></div>
+      <div class="frow"><div class="fg"><label>書類作成期日</label><input type="date" id="f-deadline"/></div><div class="fg"><label>担当司法書士</label><select id="f-lawyer"><option value="">選択</option><option>唐澤先生</option><option>佐原先生</option><option>その他</option></select></div></div>
+    </div>
+    <div class="fsec">
+      <h3>② 鹿内さん・公証役場チェック</h3>
+      <div class="frow"><div class="fg"><label>鹿内さんチェック日</label><input type="date" id="f-kanuchi"/></div><div class="fg"><label>公証人役場名</label><input type="text" id="f-notary-place" placeholder="神田公証人役場"/></div></div>
+      <div class="frow full"><div class="fg"><label>公証人氏名（甲常任）</label><input type="text" id="f-notary-name" placeholder="チェック後追記"/></div></div>
+    </div>
+    <div class="fsec">
+      <h3>③ 押印日</h3>
+      <div class="frow"><div class="fg"><label>押印日</label><input type="date" id="f-stamp"/></div><div class="fg"><label>設立費用（円）</label><input type="number" id="f-cost" placeholder="228500"/></div></div>
+    </div>
+    <div class="fsec">
+      <h3>④ 定款認証</h3>
+      <div class="frow"><div class="fg"><label>定款認証日</label><input type="date" id="f-teikan"/></div><div class="fg"><label>持参金額（円）</label><input type="number" id="f-teikan-cost" placeholder="16120"/></div></div>
+    </div>
+    <div class="fsec">
+      <h3>⑤ 司法書士引き渡し</h3>
+      <div class="frow"><div class="fg"><label>引き渡し日</label><input type="date" id="f-handover"/></div><div class="fg"><label>金額（円）</label><input type="number" id="f-handover-cost" placeholder="167500"/></div></div>
+      <div class="frow full"><div class="fg"><label>支払い方法</label><select id="f-payment"><option value="">選択</option><option>振込</option><option>現金</option></select></div></div>
+    </div>
+    <div class="form-err" id="formErr"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-submit" onclick="saveCase()"><i class="ti ti-check"></i> 登録する</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PW = 'venture';
+window._cases = [];
+window._renderReady = false;
+let _dragState = null;
+
+function fmt(d){if(!d)return '-';try{const p=d.split('-');return p[0]+'/'+(+p[1])+'/'+(+p[2]);}catch(e){return d||'-';}}
+function fmtM(v){if(!v&&v!==0)return '-';return (+v).toLocaleString()+'円';}
+
+function doLogin(){
+  if(document.getElementById('pwInput').value === PW){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('appScreen').style.display='block';
+    window._renderReady = true;
+    render();
+  } else {
+    document.getElementById('loginErr').textContent='パスワードが違います';
+  }
+}
+document.getElementById('pwInput').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+function doLogout(){
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  window._renderReady=false;
+  document.getElementById('pwInput').value='';
+}
+
+const COL_INFO=[
+  {title:'①設立受注',      rows:c=>[['法人名',c.name],['設立日',fmt(c.date)],['作成期日',fmt(c.deadline)],['担当',c.lawyer||'-']]},
+  {title:'②鹿内・公証役場',rows:c=>[['法人名',c.name],['設立日',fmt(c.date)],['鹿内確認日',fmt(c.kanuchi)],['公証人役場',c.notaryPlace||'-'],['公証人氏名',c.notaryName||'-']]},
+  {title:'③押印日',        rows:c=>[['法人名',c.name],['設立日',fmt(c.date)],['押印日',fmt(c.stamp)],['設立費用',fmtM(c.cost)]]},
+  {title:'④定款認証',      rows:c=>[['法人名',c.name],['設立日',fmt(c.date)],['定款認証日',fmt(c.teikan)],['持参金額',fmtM(c.teikanCost)]]},
+  {title:'⑤司法書士引渡',  rows:c=>[['法人名',c.name],['設立日',fmt(c.date)],['司法書士',c.lawyer||'-'],['引き渡し日',fmt(c.handover)],['金額',fmtM(c.handoverCost)],['支払',c.payment||'-']]},
+  {title:'⑥完了',          rows:c=>[['法人名',c.name],['設立日',fmt(c.date)]]},
+];
+
+function render(){
+  const cases=window._cases||[];
+  for(let ci=0;ci<6;ci++){
+    const el=document.getElementById('col-'+ci);
+    if(!el)continue;
+    el.innerHTML='';
+    for(let s=0;s<6;s++){
+      const slot=document.createElement('div');
+      slot.className='slot';
+      slot.dataset.col=ci; slot.dataset.slot=s;
+      const sn=document.createElement('span');
+      sn.className='slot-num'; sn.textContent=s+1; slot.appendChild(sn);
+      slot.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';slot.classList.add('over');});
+      slot.addEventListener('dragleave',e=>{if(!slot.contains(e.relatedTarget))slot.classList.remove('over');});
+      slot.addEventListener('drop',e=>{
+        e.preventDefault(); slot.classList.remove('over');
+        if(!_dragState)return;
+        const {caseId,fromCol}=_dragState;
+        const toCol=parseInt(slot.dataset.col);
+        if(fromCol===toCol)return;
+        const c=(window._cases||[]).find(x=>x.id===caseId);
+        if(!c)return;
+        const updated=JSON.parse(JSON.stringify(c));
+        updated.presentCols=updated.presentCols.filter(x=>x!==fromCol);
+        if(!updated.presentCols.includes(toCol))updated.presentCols.push(toCol);
+        updated.currentCol=toCol;
+        if(toCol===5)updated.completedAt=Date.now();
+        else updated.completedAt=null;
+        _dragState=null;
+        if(window._saveCase)window._saveCase(updated);
+      });
+      const c=cases.find(x=>x.slot===s&&x.presentCols&&x.presentCols.includes(ci));
+      if(c)slot.appendChild(makeFusen(c,ci));
+      el.appendChild(slot);
+    }
+  }
+}
+
+function makeFusen(c,col){
+  const isActive=(c.currentCol===col);
+  const isCompleted=(col===5&&isActive);
+  const div=document.createElement('div');
+  div.className='fusen f'+col+(isActive?' is-active':'');
+  div.style.opacity=isActive?'1':'0.28';
+  div.draggable=isActive&&!isCompleted;
+  const info=COL_INFO[col];
+  let rowsHtml='';
+  info.rows(c).forEach(([l,v])=>{rowsHtml+=`<div class="fusen-row"><span class="fusen-lbl">${l}</span><span class="fusen-val">${v}</span></div>`;});
+  let footHtml='';
+  if(isCompleted){
+    footHtml=`<button class="fusen-erase-btn" onclick="event.stopPropagation();eraseCase('${c.id}')"><i class="ti ti-trash"></i> 消去する</button>`;
+  } else if(isActive){
+    footHtml=`<div class="fusen-hint"><i class="ti ti-drag-drop"></i> ドラッグして移動</div><button class="fusen-del-btn" onclick="event.stopPropagation();delCase('${c.id}')"><i class="ti ti-trash"></i> 削除</button>`;
+  }
+  div.innerHTML=`<div class="fusen-hdr">${info.title}</div><div class="fusen-rows">${rowsHtml}</div>${footHtml}`;
+  if(isActive&&!isCompleted){
+    div.addEventListener('dragstart',e=>{_dragState={caseId:c.id,fromCol:col};e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',c.id);});
+    div.addEventListener('dragend',()=>{_dragState=null;});
+  }
+  return div;
+}
+
+function eraseCase(id){if(window._deleteCase)window._deleteCase(id);}
+function delCase(id){if(!confirm('この案件を削除しますか？\n全工程の付箋が消えます。'))return;if(window._deleteCase)window._deleteCase(id);}
+function openModal(){document.getElementById('newModal').classList.add('open');}
+function closeModal(){document.getElementById('newModal').classList.remove('open');document.getElementById('formErr').textContent='';}
+
+function saveCase(){
+  const name=document.getElementById('f-name').value.trim();
+  const date=document.getElementById('f-date').value;
+  if(!name){document.getElementById('formErr').textContent='法人名は必須です';return;}
+  if(!date){document.getElementById('formErr').textContent='設立日は必須です';return;}
+  const usedSlots=(window._cases||[]).map(c=>c.slot);
+  let slot=-1;
+  for(let i=0;i<6;i++){if(!usedSlots.includes(i)){slot=i;break;}}
+  if(slot===-1){document.getElementById('formErr').textContent='マスが満杯です（最大6件）';return;}
+  const newCase={
+    id:Date.now().toString(),slot,currentCol:0,presentCols:[0,1,2,3,4],
+    name,date,
+    deadline:document.getElementById('f-deadline').value,
+    lawyer:document.getElementById('f-lawyer').value,
+    kanuchi:document.getElementById('f-kanuchi').value,
+    notaryPlace:document.getElementById('f-notary-place').value,
+    notaryName:document.getElementById('f-notary-name').value,
+    stamp:document.getElementById('f-stamp').value,
+    cost:document.getElementById('f-cost').value,
+    teikan:document.getElementById('f-teikan').value,
+    teikanCost:document.getElementById('f-teikan-cost').value,
+    handover:document.getElementById('f-handover').value,
+    handoverCost:document.getElementById('f-handover-cost').value,
+    payment:document.getElementById('f-payment').value,
+    completedAt:null
+  };
+  if(window._saveCase)window._saveCase(newCase);
+  closeModal();clearForm();
+}
+
+function clearForm(){
+  ['f-name','f-date','f-deadline','f-kanuchi','f-notary-place','f-notary-name','f-stamp','f-cost','f-teikan','f-teikan-cost','f-handover','f-handover-cost'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('f-lawyer').value='';
+  document.getElementById('f-payment').value='';
+}
+window.render=render;
+</script>
+</body>
+</html>
